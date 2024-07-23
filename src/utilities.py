@@ -7,6 +7,10 @@ import logging
 
 from openai import OpenAI
 
+class WatchfilesFilter(logging.Filter):
+    def filter(self, record):
+        return 'watchfiles' not in record.name
+    
 def setup_logging(
     log_file="app.log",
     log_level=logging.INFO,
@@ -22,6 +26,9 @@ def setup_logging(
             logging.FileHandler(log_file)
         ]
     )
+
+    for handler in logging.getLogger().handlers:
+        handler.addFilter(WatchfilesFilter())
 
     return logging.getLogger(__name__)
 
@@ -92,7 +99,7 @@ def dict_to_csv(dict: dict, output_csv_file) -> None:
         for word, definition in dict.items():
             writer.writerow([word, definition])
 
-def query_and_get_csv(desired_count: int, batch_size: int, query: str):
+def query_and_get_csv(desired_count: int, batch_size: int, query: str, output: bool) -> dict:
     logger.info('Starting process')
     logging.info('Attempting to reach target count of {desired_count} with batch size of {batch_size}'.format(desired_count=desired_count, batch_size=batch_size))
 
@@ -115,4 +122,6 @@ def query_and_get_csv(desired_count: int, batch_size: int, query: str):
     dict = list_to_dict(input_list)
     logging.info('Total items in output dict: {n}'.format(n=len(dict)))
 
-    dict_to_csv(dict, 'test.csv')
+    if output:
+        dict_to_csv(dict, 'test.csv')
+    return dict
