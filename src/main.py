@@ -30,9 +30,7 @@ def main():
         output_to_file=False)
     return output
 
-if __name__ == "__main__":
-    """ Used when running this file as a script via python3 cli"""
-    main()
+main()
 # TODO
 # need to add exception handling
 # retries for when openai doesnt return values

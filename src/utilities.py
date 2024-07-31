@@ -1,11 +1,11 @@
-import config
-
 import csv
 import json
 import logging
 import datetime
 
 from openai import OpenAI
+
+import config
 
 class WatchfilesFilter(logging.Filter):
     def filter(self, record):
@@ -122,7 +122,8 @@ def dict_to_csv(dict: dict, output_csv_file: str) -> None:
                          while querying OpenAI @@@@@@@@@@@@@")
         logger.exception(e)
 
-def query_and_get_dict(desired_count: int, batch_size: int, query: str, output_to_file: bool) -> dict:
+def query_and_get_dict(desired_count: int, batch_size: int,
+                       query: str, output_to_file: bool) -> dict:
     """ Main logic of the program
     Queries OpenAI for completions N number of times for J batch sizes until a target count is met
     Set output_to_file to True to generate a csv file
