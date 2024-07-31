@@ -1,3 +1,5 @@
+""" Main module of the ai_flashcard_generator project """
+
 from fastapi import FastAPI
 
 import utilities
@@ -29,13 +31,13 @@ def main():
     return output
 
 if __name__ == "__main__":
-    """ Used when running this program as a script via 'python3 main.py'
+    """ Used when running this program as a script via python3 main.py
     """
     main()
 # TODO
 # need to add exception handling
 # retries for when openai doesnt return values
 # better query changes
-# find a way to filter out duplicates in the csv 
+# find a way to filter out duplicates in the csv
 # (add CSV file into query and say to generate new unique ones?)
 # filter out None,None in the CSV

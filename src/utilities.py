@@ -10,7 +10,7 @@ from openai import OpenAI
 class WatchfilesFilter(logging.Filter):
     def filter(self, record):
         return 'watchfiles' not in record.name
-    
+
 def setup_logging(
     log_file="app.log",
     log_level=logging.INFO,
@@ -41,10 +41,13 @@ openai_client = OpenAI(
 def query_openai(number: int, topic: str) -> dict:
     logger.info('Querying open AI for {n} key/values'.format(n=number))
 
-    SYSTEM_ROLE = """You generate flashcards to be used as a learning aid. The flashcards should follow the format of Side 1 equals the object/idea/word/topic and side 2 is the explanation/translation/definition for side 1.\
-    Please return the flashcards in a JSON format. I emphasize that the results must be returned in JSON format.
-    """
-    USER_ROLE = "Generate a deck of {n} number of flashcards on the topic of {topic}.".format(n=number, topic=topic)
+    SYSTEM_ROLE = """You generate flashcards to be used as a learning aid.\
+        The flashcards should follow the format of Side 1 equals the object/idea/word/topic\
+        and side 2 is the explanation/translation/definition for side 1.\
+        Please return the flashcards in a JSON format. I emphasize that the results must be returned in JSON format.
+        """
+    USER_ROLE = "Generate a deck of {n} number of flashcards \
+        on the topic of {topic}.".format(n=number, topic=topic)
 
     try:
         completion = openai_client.chat.completions.create(
@@ -61,7 +64,8 @@ def query_openai(number: int, topic: str) -> dict:
 
         content = completion.choices[0].message.content
     except Exception as e:
-        logger.exception("\n@@@@@@@@@@@@@ An exception occurred while querying OpenAI @@@@@@@@@@@@@")
+        logger.exception("\n@@@@@@@@@@@@@ An exception occurred \
+                         while querying OpenAI @@@@@@@@@@@@@")
         logger.exception(e)
     
     return parse_completion_into_list_of_dicts(content)
@@ -79,7 +83,8 @@ def parse_completion_into_list_of_dicts(completion_content: str) -> dict:
 
         return data
     except Exception as e:
-        logger.exception("\n@@@@@@@@@@@@@ An exception occurred @@@@@@@@@@@@@")
+        logger.exception("\n@@@@@@@@@@@@@ An exception occurred \
+                         while querying OpenAI @@@@@@@@@@@@@")
         logger.exception(e)
         return None
 
@@ -117,7 +122,8 @@ def dict_to_csv(dict: dict, output_csv_file: str) -> None:
             for word, definition in dict.items():
                 writer.writerow([word, definition])
     except Exception as e:
-        logger.exception("\n@@@@@@@@@@@@@ An exception occurred @@@@@@@@@@@@@")
+        logger.exception("\n@@@@@@@@@@@@@ An exception occurred \
+                         while querying OpenAI @@@@@@@@@@@@@")
         logger.exception(e)
 
 def query_and_get_dict(desired_count: int, batch_size: int, query: str, output_to_file: bool) -> dict:
@@ -126,7 +132,9 @@ def query_and_get_dict(desired_count: int, batch_size: int, query: str, output_t
     Set output_to_file to True to generate a csv file
     """
     logger.info('Starting process')
-    logger.info('Attempting to reach target count of {desired_count} with batch size of {batch_size}'.format(desired_count=desired_count, batch_size=batch_size))
+    logger.info('Attempting to reach target count of {desired_count} \
+                with batch size of {batch_size}'.format(desired_count=desired_count, 
+                                                        batch_size=batch_size))
 
     input_list = []
     while len(input_list) <= desired_count:
