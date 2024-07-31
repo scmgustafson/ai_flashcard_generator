@@ -28,9 +28,9 @@ def output_dict():
     target_count = 50
     batch_count = 10
 
-    output_dict = utilities.query_and_get_dict(target_count, batch_count, \
+    output = utilities.query_and_get_dict(target_count, batch_count, \
                                                'French vocabulary at CEFR level C1 where Side 2 is in English', output_to_file=False)
-    return output_dict
+    return output
 
 if __name__ == "__main__":
     main()
