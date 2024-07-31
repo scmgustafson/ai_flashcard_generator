@@ -31,8 +31,7 @@ def main():
     return output
 
 if __name__ == "__main__":
-    """ Used when running this program as a script via python3 main.py
-    """
+    """ Used when running this file as a script via python3 cli"""
     main()
 # TODO
 # need to add exception handling

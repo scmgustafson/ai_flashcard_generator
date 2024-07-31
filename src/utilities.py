@@ -52,10 +52,6 @@ def query_openai(number: int, topic: str) -> dict:
     try:
         completion = openai_client.chat.completions.create(
         model="gpt-4o-mini",
-        # messages=[
-        #     {"role": "system", "content": "You generate flashcards to be used as a learning aid. The flashcards should follow the format of Side 1 equals the object/idea/word/topic and side 2 is the explanation/translation/definition for side 1. Please return the flashcards in a json format."},
-        #     {"role": "user", "content": "Generate a deck of {n} number of flashcards on the topic of {topic}.".format(n=number, topic=topic)}
-        #     ]
         messages=[
             {"role": "system", "content": SYSTEM_ROLE},
             {"role": "user", "content": USER_ROLE}
@@ -67,7 +63,7 @@ def query_openai(number: int, topic: str) -> dict:
         logger.exception("\n@@@@@@@@@@@@@ An exception occurred \
                          while querying OpenAI @@@@@@@@@@@@@")
         logger.exception(e)
-    
+
     return parse_completion_into_list_of_dicts(content)
 
 def parse_completion_into_list_of_dicts(completion_content: str) -> dict:
@@ -76,7 +72,7 @@ def parse_completion_into_list_of_dicts(completion_content: str) -> dict:
     try:
         start_index = completion_content.find('[')
         end_index = completion_content.rfind(']') + 1
-        
+
         # Extract and load into JSON
         json_str = completion_content[start_index:end_index]
         data = json.loads(json_str)
@@ -96,7 +92,7 @@ def list_to_dict(list_string_list: list[list[str]]):
     data = list_string_list
     if type(data) != type([]):
         raise TypeError('Input object not list. List expected.')
-    
+
     dict = {}
     for key_value in data:
         split = key_value[0].split(',')
@@ -111,7 +107,7 @@ def dict_to_csv(dict: dict, output_csv_file: str) -> None:
     """
     if type(dict) !=  type(dict()):
         raise TypeError('Input object not dictionary. Dictionary expected.')
-    
+
     try:
         with open(output_csv_file, mode='w', newline='', encoding='utf-8') as csv_file:
             writer = csv.writer(csv_file)
