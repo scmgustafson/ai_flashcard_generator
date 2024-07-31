@@ -21,7 +21,7 @@ logger = utilities.setup_logging()
 def main():
     """ Used instead of @app.get("/") route when doing testing
     """
-    target_count = 50
+    target_count = 10
     batch_count = 10
 
     output = utilities.query_and_get_dict(

@@ -129,8 +129,8 @@ def query_and_get_dict(desired_count: int, batch_size: int,
     Set output_to_file to True to generate a csv file
     """
     logger.info('Starting process')
-    logger.info('Attempting to reach target count of {desired_count} \
-                with batch size of {batch_size}'.format(desired_count=desired_count, 
+    logger.info(('Attempting to reach target count of '
+                '{desired_count} with batch size of {batch_size}').format(desired_count=desired_count, 
                                                         batch_size=batch_size))
 
     input_list = []
@@ -149,8 +149,8 @@ def query_and_get_dict(desired_count: int, batch_size: int,
         logger.info('Length of preprocessed list: {length}'.format(length=len(input_list)))
 
     #input_list = [['une boîte,a box'], ['réussir,to succeed']]
-    logging.debug('Total items in output dict: {n}'.format(n=len(dict)))
     dict = list_to_dict(input_list)
+    logging.debug('Total items in output dict: {n}'.format(n=len(dict)))
 
     # Optional flag to export results to a .csv file
     if output_to_file:
