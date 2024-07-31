@@ -1,9 +1,9 @@
 import config
-import utilities
 
 import csv
 import json
 import logging
+import datetime
 
 from openai import OpenAI
 
@@ -61,6 +61,7 @@ def query_openai(number: int, topic: str) -> dict:
 
         content = completion.choices[0].message.content
     except Exception as e:
+        logger.exception("\n@@@@@@@@@@@@@ An exception occurred while querying OpenAI @@@@@@@@@@@@@")
         logger.exception(e)
     
     return parse_completion_into_list_of_dicts(content)
@@ -68,22 +69,29 @@ def query_openai(number: int, topic: str) -> dict:
 def parse_completion_into_list_of_dicts(completion_content: str) -> dict:
     """ Returns a dictionary of key/values parsed from the returned OpenAI completion
     """
+    try:
+        start_index = completion_content.find('[')
+        end_index = completion_content.rfind(']') + 1
+        
+        # Extract and load into JSON
+        json_str = completion_content[start_index:end_index]
+        data = json.loads(json_str)
 
-    start_index = completion_content.find('[')
-    end_index = completion_content.rfind(']') + 1
-    
-    # Extract and load into JSON
-    json_str = completion_content[start_index:end_index]
-    data = json.loads(json_str)
-
-    return data
+        return data
+    except Exception as e:
+        logger.exception("\n@@@@@@@@@@@@@ An exception occurred @@@@@@@@@@@@@")
+        logger.exception(e)
+        return None
 
 def list_to_dict(list_string_list: list[list[str]]):
     """Take an awful list of lists of strings and parse into a dict
     """
-    #input_list = [['une boîte,a box'], ['réussir,to succeed']]
 
+    #list_string_list = [['une boîte,a box'], ['réussir,to succeed']]
     data = list_string_list
+    if type(data) != type([]):
+        raise TypeError('Input object not list. List expected.')
+    
     dict = {}
     for key_value in data:
         split = key_value[0].split(',')
@@ -94,16 +102,29 @@ def list_to_dict(list_string_list: list[list[str]]):
     return dict
 
 def dict_to_csv(dict: dict, output_csv_file: str) -> None:
-    with open(output_csv_file, mode='w', newline='', encoding='utf-8') as csv_file:
-        writer = csv.writer(csv_file)
-        # Write the headers
-        writer.writerow(['word', 'definition'])
+    """ Takes in a dictionary and outputs as a CSV file with headers of 'word' and 'defition'
+    """
+    if type(dict) !=  type(dict()):
+        raise TypeError('Input object not dictionary. Dictionary expected.')
+    
+    try:
+        with open(output_csv_file, mode='w', newline='', encoding='utf-8') as csv_file:
+            writer = csv.writer(csv_file)
+            # Write the headers
+            writer.writerow(['word', 'definition'])
 
-        # Write the data
-        for word, definition in dict.items():
-            writer.writerow([word, definition])
+            # Write the data
+            for word, definition in dict.items():
+                writer.writerow([word, definition])
+    except Exception as e:
+        logger.exception("\n@@@@@@@@@@@@@ An exception occurred @@@@@@@@@@@@@")
+        logger.exception(e)
 
-def query_and_get_dict(desired_count: int, batch_size: int, query: str, output: bool) -> dict:
+def query_and_get_dict(desired_count: int, batch_size: int, query: str, output_to_file: bool) -> dict:
+    """ Main logic of the program
+    Queries OpenAI for completions N number of times for J batch sizes until a target count is met
+    Set output_to_file to True to generate a csv file
+    """
     logger.info('Starting process')
     logger.info('Attempting to reach target count of {desired_count} with batch size of {batch_size}'.format(desired_count=desired_count, batch_size=batch_size))
 
@@ -123,11 +144,12 @@ def query_and_get_dict(desired_count: int, batch_size: int, query: str, output: 
         logger.info('Length of preprocessed list: {length}'.format(length=len(input_list)))
 
     #input_list = [['une boîte,a box'], ['réussir,to succeed']]
+    logging.debug('Total items in output dict: {n}'.format(n=len(dict)))
     dict = list_to_dict(input_list)
-    logging.info('Total items in output dict: {n}'.format(n=len(dict)))
 
     # Optional flag to export results to a .csv file
-    if output:
-        dict_to_csv(dict, 'test.csv')
+    if output_to_file:
+        now = datetime.now()
+        dict_to_csv(dict, 'output-{timestamp}.csv'.format(timestamp = now))
 
     return dict
