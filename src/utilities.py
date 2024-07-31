@@ -66,17 +66,21 @@ def query_openai(number: int, topic: str) -> dict:
     return parse_completion_into_list_of_dicts(content)
 
 def parse_completion_into_list_of_dicts(completion_content: str) -> dict:
+    """ Returns a dictionary of key/values parsed from the returned OpenAI completion
+    """
+
     start_index = completion_content.find('[')
     end_index = completion_content.rfind(']') + 1
     
-    # Extract the JSON string
+    # Extract and load into JSON
     json_str = completion_content[start_index:end_index]
-
-    # Parse the JSON string into a dictionary
     data = json.loads(json_str)
+
     return data
 
 def list_to_dict(list_string_list: list[list[str]]):
+    """Take an awful list of lists of strings and parse into a dict
+    """
     #input_list = [['une boîte,a box'], ['réussir,to succeed']]
 
     data = list_string_list
@@ -89,7 +93,7 @@ def list_to_dict(list_string_list: list[list[str]]):
 
     return dict
 
-def dict_to_csv(dict: dict, output_csv_file) -> None:
+def dict_to_csv(dict: dict, output_csv_file: str) -> None:
     with open(output_csv_file, mode='w', newline='', encoding='utf-8') as csv_file:
         writer = csv.writer(csv_file)
         # Write the headers
@@ -99,9 +103,9 @@ def dict_to_csv(dict: dict, output_csv_file) -> None:
         for word, definition in dict.items():
             writer.writerow([word, definition])
 
-def query_and_get_csv(desired_count: int, batch_size: int, query: str, output: bool) -> dict:
+def query_and_get_dict(desired_count: int, batch_size: int, query: str, output: bool) -> dict:
     logger.info('Starting process')
-    logging.info('Attempting to reach target count of {desired_count} with batch size of {batch_size}'.format(desired_count=desired_count, batch_size=batch_size))
+    logger.info('Attempting to reach target count of {desired_count} with batch size of {batch_size}'.format(desired_count=desired_count, batch_size=batch_size))
 
     input_list = []
     while len(input_list) <= desired_count:
@@ -122,6 +126,8 @@ def query_and_get_csv(desired_count: int, batch_size: int, query: str, output: b
     dict = list_to_dict(input_list)
     logging.info('Total items in output dict: {n}'.format(n=len(dict)))
 
+    # Optional flag to export results to a .csv file
     if output:
         dict_to_csv(dict, 'test.csv')
+
     return dict
