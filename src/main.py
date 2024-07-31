@@ -1,33 +1,36 @@
 from fastapi import FastAPI
 
-import config
 import utilities
 
 app = FastAPI()
 logger = utilities.setup_logging()
-
 
 # @app.get("/")
 # async def output_dict():
 #     target_count = 50
 #     batch_count = 10
 
-#     output_dict = utilities.query_and_get_dict(target_count, batch_count,\
-#                                                'French vocabulary at CEFR level C1 where Side 2 is in English',\
-#                                                 output_to_file=False)
-#     return output_dict  
+#     output_dict = utilities.query_and_get_dict(
+#         target_count,batch_count,
+#         'French vocabulary at CEFR level C1 where Side 2 is in English',
+#         output_to_file=False)
+#     return output_dict
+
 def main():
     """ Used instead of @app.get("/") route when doing testing
     """
     target_count = 50
     batch_count = 10
 
-    output = utilities.query_and_get_dict(target_count, batch_count,\
-                                               'French vocabulary at CEFR level C1 where Side 2 is in English',\
-                                                output_to_file=False)
+    output = utilities.query_and_get_dict(
+        target_count, batch_count,
+        'French vocabulary at CEFR level C1 where Side 2 is in English',
+        output_to_file=False)
     return output
 
 if __name__ == "__main__":
+    """ Used when running this program as a script via 'python3 main.py'
+    """
     main()
 # TODO
 # need to add exception handling
