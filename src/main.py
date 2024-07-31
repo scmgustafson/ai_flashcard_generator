@@ -1,13 +1,9 @@
 from fastapi import FastAPI
-from openai import OpenAI
 
 import config
 import utilities
 
 app = FastAPI()
-openai_client = OpenAI(
-    api_key=config.OPENAI_API_KEY
-)
 logger = utilities.setup_logging()
 
 
@@ -17,24 +13,22 @@ logger = utilities.setup_logging()
 #     batch_count = 10
 
 #     output_dict = utilities.query_and_get_dict(target_count, batch_count,\
-#                                                'French vocabulary at CEFR level C1 where Side 2 is in English', output_to_file=False)
-#     return output_dict
-
+#                                                'French vocabulary at CEFR level C1 where Side 2 is in English',\
+#                                                 output_to_file=False)
+#     return output_dict  
 def main():
-    output = output_dict()
-    print(output)
-
-def output_dict():
+    """ Used instead of @app.get("/") route when doing testing
+    """
     target_count = 50
     batch_count = 10
 
-    output = utilities.query_and_get_dict(target_count, batch_count, \
-                                               'French vocabulary at CEFR level C1 where Side 2 is in English', output_to_file=False)
+    output = utilities.query_and_get_dict(target_count, batch_count,\
+                                               'French vocabulary at CEFR level C1 where Side 2 is in English',\
+                                                output_to_file=False)
     return output
 
 if __name__ == "__main__":
     main()
-
 # TODO
 # need to add exception handling
 # retries for when openai doesnt return values
