@@ -1,4 +1,4 @@
-src/config.py
+
 src/__pycache__
 test.csv
 *.log
