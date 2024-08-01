@@ -1,3 +1,5 @@
+""" All of the main functions required to accomplish the goal of the program """
+
 import csv
 import json
 import logging
@@ -7,7 +9,12 @@ from openai import OpenAI
 
 import config
 
+openai_client = OpenAI(
+    api_key=config.OPENAI_API_KEY
+)
+
 class WatchfilesFilter(logging.Filter):
+    """ Used for filtering out the 'watchfiles' logs from FastAPI default logging behavior """
     def filter(self, record):
         return 'watchfiles' not in record.name
 
@@ -17,6 +24,7 @@ def setup_logging(
     log_format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     date_format="%Y-%m-%d %H:%M:%S"
 ):
+    """ Set up logger with basic format + include WatchfilesFilter """
     logging.basicConfig(
         level=log_level,
         format=log_format,
@@ -34,27 +42,28 @@ def setup_logging(
 
 logger = setup_logging()
 
-openai_client = OpenAI(
-    api_key=config.OPENAI_API_KEY
-)
+def query_openai(quantity: int, topic: str) -> dict:
+    """Main method for hitting openAI's GPT with out query
 
-def query_openai(number: int, topic: str) -> dict:
-    logger.info('Querying open AI for {n} key/values'.format(n=number))
+    SYSTEM_ROLE is the primary context / role for the GPT
+    USER_ROLE is the prompt
+    """
+    logger.info(f'Querying open AI for {quantity} key/values')
 
-    SYSTEM_ROLE = """You generate flashcards to be used as a learning aid.\
+    system_role = """You generate flashcards to be used as a learning aid.\
         The flashcards should follow the format of Side 1 equals the object/idea/word/topic\
         and side 2 is the explanation/translation/definition for side 1.\
         Please return the flashcards in a JSON format. I emphasize that the results must be returned in JSON format.
         """
-    USER_ROLE = "Generate a deck of {n} number of flashcards \
-        on the topic of {topic}.".format(n=number, topic=topic)
+    user_role = f'Generate a deck of {quantity} number of flashcards \
+        on the topic of {topic}.'
 
     try:
         completion = openai_client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
-            {"role": "system", "content": SYSTEM_ROLE},
-            {"role": "user", "content": USER_ROLE}
+            {"role": "system", "content": system_role},
+            {"role": "user", "content": user_role}
             ]
         )
 
@@ -90,22 +99,22 @@ def list_to_dict(list_string_list: list[list[str]]):
 
     #list_string_list = [['une boîte,a box'], ['réussir,to succeed']]
     data = list_string_list
-    if type(data) != type([]):
+    if not isinstance(data, list):
         raise TypeError('Input object not list. List expected.')
 
-    dict = {}
+    output_dict = {}
     for key_value in data:
         split = key_value[0].split(',')
         key = split[0]
         value = split[1]
-        dict[key] = value
+        output_dict[key] = value
 
-    return dict
+    return output_dict
 
-def dict_to_csv(dict: dict, output_csv_file: str) -> None:
+def dict_to_csv(input_dict: dict, output_csv_file: str) -> None:
     """ Takes in a dictionary and outputs as a CSV file with headers of 'word' and 'defition'
     """
-    if type(dict) !=  type(dict()):
+    if not isinstance(input_dict, dict):
         raise TypeError('Input object not dictionary. Dictionary expected.')
 
     try:
@@ -115,7 +124,7 @@ def dict_to_csv(dict: dict, output_csv_file: str) -> None:
             writer.writerow(['word', 'definition'])
 
             # Write the data
-            for word, definition in dict.items():
+            for word, definition in input_dict.items():
                 writer.writerow([word, definition])
     except Exception as e:
         logger.exception("\n@@@@@@@@@@@@@ An exception occurred \
@@ -130,8 +139,7 @@ def query_and_get_dict(desired_count: int, batch_size: int,
     """
     logger.info('Starting process')
     logger.info(('Attempting to reach target count of '
-                '{desired_count} with batch size of {batch_size}').format(desired_count=desired_count, 
-                                                        batch_size=batch_size))
+                f'{desired_count} with batch size of {batch_size}'))
 
     input_list = []
     while len(input_list) <= desired_count:
@@ -144,17 +152,17 @@ def query_and_get_dict(desired_count: int, batch_size: int,
                 input_string += str(item.get('Side 1')) + ',' + str(item.get('Side 2'))
                 input_list.append(input_string.split('\n'))
             except Exception as e:
-                print('Exception occured: {e}'.format(e=e))
+                print(f'Exception occured: {e}')
 
-        logger.info('Length of preprocessed list: {length}'.format(length=len(input_list)))
+        logger.info(f'Length of preprocessed list: {len(input_list)}')
 
     #input_list = [['une boîte,a box'], ['réussir,to succeed']]
-    dict = list_to_dict(input_list)
-    logging.debug('Total items in output dict: {n}'.format(n=len(dict)))
+    output_dict = list_to_dict(input_list)
+    logging.debug(f'Total items in output dict: {len(output_dict)}')
 
     # Optional flag to export results to a .csv file
     if output_to_file:
-        now = datetime.now()
-        dict_to_csv(dict, 'output-{timestamp}.csv'.format(timestamp = now))
+        now = datetime.datetime.now()
+        dict_to_csv(output_dict, f'output-{now}.csv')
 
-    return dict
+    return output_dict
