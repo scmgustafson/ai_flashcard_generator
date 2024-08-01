@@ -75,7 +75,7 @@ def query_openai(quantity: int, topic: str) -> dict:
 
     return parse_completion_into_list_of_dicts(content)
 
-def parse_completion_into_list_of_dicts(completion_content: str) -> dict:
+def parse_completion_into_list_of_dicts(completion_content: str) -> list[dict]:
     """ Returns a dictionary of key/values parsed from the returned OpenAI completion
     """
     try:
