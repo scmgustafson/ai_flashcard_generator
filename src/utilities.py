@@ -159,7 +159,8 @@ def query_and_get_dict(desired_count: int, batch_size: int,
 
     #input_list = [['une boîte,a box'], ['réussir,to succeed']]
     output_dict = list_to_dict(input_list)
-    logging.debug(f'Total items in output dict: {len(output_dict)}')
+    output_length = len(output_dict)
+    logging.debug(f'Total items in output dict: %s', output_length)
 
     # Optional flag to export results to a .csv file
     if output_to_file:
