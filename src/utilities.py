@@ -1,22 +1,30 @@
-import config
-import utilities
+""" All of the main functions required to accomplish the goal of the program """
 
 import csv
 import json
 import logging
+import datetime
 
 from openai import OpenAI
 
+import config
+
+openai_client = OpenAI(
+    api_key=config.OPENAI_API_KEY
+)
+
 class WatchfilesFilter(logging.Filter):
+    """ Used for filtering out the 'watchfiles' logs from FastAPI default logging behavior """
     def filter(self, record):
         return 'watchfiles' not in record.name
-    
+
 def setup_logging(
     log_file="app.log",
     log_level=logging.INFO,
     log_format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     date_format="%Y-%m-%d %H:%M:%S"
 ):
+    """ Set up logger with basic format + include WatchfilesFilter """
     logging.basicConfig(
         level=log_level,
         format=log_format,
@@ -34,78 +42,104 @@ def setup_logging(
 
 logger = setup_logging()
 
-openai_client = OpenAI(
-    api_key=config.OPENAI_API_KEY
-)
+def query_openai(quantity: int, topic: str) -> dict:
+    """Main method for hitting openAI's GPT with out query
 
-def query_openai(number: int, topic: str) -> dict:
-    logger.info('Querying open AI for {n} key/values'.format(n=number))
-
-    SYSTEM_ROLE = """You generate flashcards to be used as a learning aid. The flashcards should follow the format of Side 1 equals the object/idea/word/topic and side 2 is the explanation/translation/definition for side 1.\
-    Please return the flashcards in a JSON format. I emphasize that the results must be returned in JSON format.
+    SYSTEM_ROLE is the primary context / role for the GPT
+    USER_ROLE is the prompt
     """
-    USER_ROLE = "Generate a deck of {n} number of flashcards on the topic of {topic}.".format(n=number, topic=topic)
+    logger.info('Querying open AI for %s key/values', quantity)
+
+    system_role = """You generate flashcards to be used as a learning aid.\
+        The flashcards should follow the format of Side 1 equals the object/idea/word/topic\
+        and side 2 is the explanation/translation/definition for side 1.\
+        Please return the flashcards in a JSON format. I emphasize that the results must be returned in JSON format.
+        """
+    user_role = f'Generate a deck of {quantity} number of flashcards \
+        on the topic of {topic}.'
 
     try:
         completion = openai_client.chat.completions.create(
         model="gpt-4o-mini",
-        # messages=[
-        #     {"role": "system", "content": "You generate flashcards to be used as a learning aid. The flashcards should follow the format of Side 1 equals the object/idea/word/topic and side 2 is the explanation/translation/definition for side 1. Please return the flashcards in a json format."},
-        #     {"role": "user", "content": "Generate a deck of {n} number of flashcards on the topic of {topic}.".format(n=number, topic=topic)}
-        #     ]
         messages=[
-            {"role": "system", "content": SYSTEM_ROLE},
-            {"role": "user", "content": USER_ROLE}
+            {"role": "system", "content": system_role},
+            {"role": "user", "content": user_role}
             ]
         )
 
         content = completion.choices[0].message.content
     except Exception as e:
+        logger.exception("\n@@@@@@@@@@@@@ An exception occurred \
+                         while querying OpenAI @@@@@@@@@@@@@")
         logger.exception(e)
-    
+
     return parse_completion_into_list_of_dicts(content)
 
 def parse_completion_into_list_of_dicts(completion_content: str) -> dict:
     """ Returns a dictionary of key/values parsed from the returned OpenAI completion
     """
+    try:
+        start_index = completion_content.find('[')
+        end_index = completion_content.rfind(']') + 1
 
-    start_index = completion_content.find('[')
-    end_index = completion_content.rfind(']') + 1
-    
-    # Extract and load into JSON
-    json_str = completion_content[start_index:end_index]
-    data = json.loads(json_str)
+        # Extract and load into JSON
+        json_str = completion_content[start_index:end_index]
+        data = json.loads(json_str)
 
-    return data
+        return data
+    except Exception as e:
+        logger.exception("\n@@@@@@@@@@@@@ An exception occurred \
+                         while querying OpenAI @@@@@@@@@@@@@")
+        logger.exception(e)
+        return None
 
 def list_to_dict(list_string_list: list[list[str]]):
     """Take an awful list of lists of strings and parse into a dict
     """
-    #input_list = [['une boîte,a box'], ['réussir,to succeed']]
 
+    #list_string_list = [['une boîte,a box'], ['réussir,to succeed']]
     data = list_string_list
-    dict = {}
+    if not isinstance(data, list):
+        raise TypeError('Input object not list. List expected.')
+
+    output_dict = {}
     for key_value in data:
         split = key_value[0].split(',')
         key = split[0]
         value = split[1]
-        dict[key] = value
+        output_dict[key] = value
 
-    return dict
+    return output_dict
 
-def dict_to_csv(dict: dict, output_csv_file: str) -> None:
-    with open(output_csv_file, mode='w', newline='', encoding='utf-8') as csv_file:
-        writer = csv.writer(csv_file)
-        # Write the headers
-        writer.writerow(['word', 'definition'])
+def dict_to_csv(input_dict: dict, output_csv_file: str) -> None:
+    """ Takes in a dictionary and outputs as a CSV file with headers of 'word' and 'defition'
+    """
+    if not isinstance(input_dict, dict):
+        raise TypeError('Input object not dictionary. Dictionary expected.')
 
-        # Write the data
-        for word, definition in dict.items():
-            writer.writerow([word, definition])
+    try:
+        with open(output_csv_file, mode='w', newline='', encoding='utf-8') as csv_file:
+            writer = csv.writer(csv_file)
+            # Write the headers
+            writer.writerow(['word', 'definition'])
 
-def query_and_get_dict(desired_count: int, batch_size: int, query: str, output: bool) -> dict:
+            # Write the data
+            for word, definition in input_dict.items():
+                writer.writerow([word, definition])
+    except Exception as e:
+        logger.exception("\n@@@@@@@@@@@@@ An exception occurred \
+                         while querying OpenAI @@@@@@@@@@@@@")
+        logger.exception(e)
+
+def query_and_get_dict(desired_count: int, batch_size: int,
+                       query: str, output_to_file: bool) -> dict:
+    """ Main logic of the program
+    Queries OpenAI for completions N number of times for J batch sizes until a target count is met
+    Set output_to_file to True to generate a csv file
+    """
     logger.info('Starting process')
-    logger.info('Attempting to reach target count of {desired_count} with batch size of {batch_size}'.format(desired_count=desired_count, batch_size=batch_size))
+    logger.info(('Attempting to reach target count of '
+                '%s with batch size of %s'), desired_count,  batch_size)
 
     input_list = []
     while len(input_list) <= desired_count:
@@ -118,16 +152,18 @@ def query_and_get_dict(desired_count: int, batch_size: int, query: str, output: 
                 input_string += str(item.get('Side 1')) + ',' + str(item.get('Side 2'))
                 input_list.append(input_string.split('\n'))
             except Exception as e:
-                print('Exception occured: {e}'.format(e=e))
+                print(f'Exception occured: {e}')
 
-        logger.info('Length of preprocessed list: {length}'.format(length=len(input_list)))
+        list_length = len(input_list)
+        logger.info('Length of preprocessed list: %s', list_length)
 
     #input_list = [['une boîte,a box'], ['réussir,to succeed']]
-    dict = list_to_dict(input_list)
-    logging.info('Total items in output dict: {n}'.format(n=len(dict)))
+    output_dict = list_to_dict(input_list)
+    logging.debug(f'Total items in output dict: {len(output_dict)}')
 
     # Optional flag to export results to a .csv file
-    if output:
-        dict_to_csv(dict, 'test.csv')
+    if output_to_file:
+        now = datetime.datetime.now()
+        dict_to_csv(output_dict, f'output-{now}.csv')
 
-    return dict
+    return output_dict
