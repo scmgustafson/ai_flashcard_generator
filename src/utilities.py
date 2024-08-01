@@ -48,7 +48,7 @@ def query_openai(quantity: int, topic: str) -> dict:
     SYSTEM_ROLE is the primary context / role for the GPT
     USER_ROLE is the prompt
     """
-    logger.info(f'Querying open AI for {quantity} key/values')
+    logger.info('Querying open AI for %s key/values', quantity)
 
     system_role = """You generate flashcards to be used as a learning aid.\
         The flashcards should follow the format of Side 1 equals the object/idea/word/topic\
@@ -139,7 +139,7 @@ def query_and_get_dict(desired_count: int, batch_size: int,
     """
     logger.info('Starting process')
     logger.info(('Attempting to reach target count of '
-                f'{desired_count} with batch size of {batch_size}'))
+                '%s with batch size of %s'), desired_count,  batch_size)
 
     input_list = []
     while len(input_list) <= desired_count:
@@ -154,7 +154,8 @@ def query_and_get_dict(desired_count: int, batch_size: int,
             except Exception as e:
                 print(f'Exception occured: {e}')
 
-        logger.info(f'Length of preprocessed list: {len(input_list)}')
+        list_length = len(input_list)
+        logger.info('Length of preprocessed list: %s', list_length)
 
     #input_list = [['une boîte,a box'], ['réussir,to succeed']]
     output_dict = list_to_dict(input_list)
