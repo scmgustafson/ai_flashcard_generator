@@ -1,6 +1,11 @@
+""" Unit tests for the 'utilities' module """
+
 import utilities
 
 def test_parse_completion_into_list_of_dicts():
+    """ Test that the parse_completion_into_list_of_dicts() function will
+    successfully take a sample completion and return a list_of_dicts
+    """
     test_input = '''```json
                 [
                     {
@@ -49,7 +54,9 @@ def test_parse_completion_into_list_of_dicts():
     assert isinstance(output, list)
 
 def test_list_to_dict():
-    # def list_to_dict(list_string_list: list[list[str]]):
+    """ Test that the list_to_dict function will
+    successfully take a wacky list and return a dict
+    """
     test_input = [['une boîte,a box'], ['réussir,to succeed']]
     output = utilities.list_to_dict(test_input)
     assert isinstance(output, dict)
