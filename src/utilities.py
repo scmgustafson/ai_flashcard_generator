@@ -75,7 +75,7 @@ def query_openai(quantity: int, topic: str) -> dict:
 
     return parse_completion_into_list_of_dicts(content)
 
-def parse_completion_into_list_of_dicts(completion_content: str) -> dict:
+def parse_completion_into_list_of_dicts(completion_content: str) -> list[dict]:
     """ Returns a dictionary of key/values parsed from the returned OpenAI completion
     """
     try:
@@ -159,7 +159,8 @@ def query_and_get_dict(desired_count: int, batch_size: int,
 
     #input_list = [['une boîte,a box'], ['réussir,to succeed']]
     output_dict = list_to_dict(input_list)
-    logging.debug(f'Total items in output dict: {len(output_dict)}')
+    output_length = len(output_dict)
+    logging.debug('Total items in output dict: %s', output_length)
 
     # Optional flag to export results to a .csv file
     if output_to_file:
