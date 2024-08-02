@@ -19,6 +19,11 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install pylint
-    - name: Analysing the code with pylint
+        pip install pytest
+    - name: Analysing the code with Pylint
       run: |
         pylint $(git ls-files '*.py') --fail-under 9 --ignored-modules config --ignore config.py --disable=W0511,W0718,R0903
+    - name: Execute unit tests with Pytest
+      run: |
+        pytest $(git ls-files 'test_*.py')
+        
