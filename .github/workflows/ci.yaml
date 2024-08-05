@@ -1,7 +1,5 @@
 name: Pylint
-
 on: pull_request
-
 jobs:
   ci:
     runs-on: ubuntu-latest
